@@ -1,6 +1,6 @@
 // Using jQuery, read our data and call visualize(...) only once the page is ready:
 $(function() {
-  d3.csv("football.csv").then(function(data) {
+  d3.csv("uiuc-students-by-curriculum.csv").then(function(data) {
     // Write the data to the console for debugging:
     console.log(data);
 
@@ -24,55 +24,59 @@ var visualize = function(data) {
   .append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var col = [];
-  for (var i = 0; i < data.length; i++) {
-    if (!col.includes(data[i].Opponent)) {
-      col.push(data[i].Opponent)
-    }
-  }
+  
 
-  //col = col.filter( onlyUnique );
-
-  var year = d3.scaleLinear()
-  .domain([1892,2018])
-  .range([0,width]);
-
-  var axisVariable = d3.axisTop()
-  .scale( year )
-  .tickFormat(d3.format("d"))
-
-  svg.append("g")
-  .call( axisVariable );
-
-  var team = d3.scalePoint()
-  .domain(col)
-  .range([0,height]);
-
-  var axisVariable = d3.axisLeft()
-  .scale( team )
-
-  svg.append("g")
-  .call( axisVariable );
-
-  // Visualization Code:
-  var j = 0;
-  var colors = ["red", "violet", "skyblue", "chartreuse", "coral"]
-  svg.selectAll("Season")
-  .data(data)
-  .enter()
-  .append("circle")
-  .attr("r", function (d, i) {
-    return data[i].IlliniScore/3.5;
-  })
-  .attr("cx", function (d, i) {
-    return year( d["Season"]);
-  })
-  .attr("cy", function (d, i) {
-    return team (d ["Opponent"]);
-  })
-  .attr("fill", function (d, i) {
-    return colors[Math.floor(data[i].IlliniScore/20)];
-  })
-  .attr("stroke", "black")
-  .style("opacity", 0.65)
-};
+//   var col = [];
+//   for (var i = 0; i < data.length; i++) {
+//     if (!col.includes(data[i].Opponent)) {
+//       col.push(data[i].Opponent)
+//     }
+//   }
+//
+//   //col = col.filter( onlyUnique );
+//
+//   var year = d3.scaleLinear()
+//   .domain([1892,2018])
+//   .range([0,width]);
+//
+//   var axisVariable = d3.axisTop()
+//   .scale( year )
+//   .tickFormat(d3.format("d"))
+//
+//   svg.append("g")
+//   .call( axisVariable );
+//
+//   var team = d3.scalePoint()
+//   .domain(col)
+//   .range([0,height]);
+//
+//   var axisVariable = d3.axisLeft()
+//   .scale( team )
+//
+//   svg.append("g")
+//   .call( axisVariable );
+//
+//   // Visualization Code:
+//   var j = 0;
+//   var colors = ["red", "violet", "skyblue", "chartreuse", "coral"]
+//   svg.selectAll("Fall")
+//   .data(data)
+//   .enter()
+//   .append("circle")
+//   .attr("r", function (d, i) {
+//     return 4;
+//     //return data[i].IlliniScore/3.5;
+//   })
+//   .attr("cx", function (d, i) {
+//     return year( d["Fall"]);
+//   })
+//   .attr("cy", function (d, i) {
+//     return team (d ["College"]);
+//   })
+//   .attr("fill", function (d, i) {
+//     return red;
+//     //return colors[Math.floor(data[i].IlliniScore/20)];
+//   })
+//   .attr("stroke", "black")
+//   .style("opacity", 0.65)
+// };
