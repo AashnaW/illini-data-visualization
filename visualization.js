@@ -10,11 +10,36 @@ $(function() {
 });
 
 var visualize = function(data) {
+  svg.append("g")
+  .call( axisVariable );
+  var arrayLength = data.length;
+	for (var i = 0; i < arrayLength; i++) {
+    change = data[i]['Fall'] - data[i]['Fall'];
+  	if (change < -3) {
+      data[i]['Change'] = 'negative';
+  	} else if (change > 5) {
+  	  data[i]['Change'] = 'positive';
+  	} else {
+  	  data[i]['Change'] = 'neutral';
+  	}
+  }
+
   var opts = {
 		width: 600,
 		height: 500,
 		margin: {top: 20, right: 100, bottom: 30, left: 150}
 	};
+
+  var year = d3.scaleLinear()
+  .domain([1892,2018])
+  .range([0,opts.width]);
+
+  var axisVariable = d3.axisTop()
+  .scale( year )
+  .tickFormat(d3.format("d"))
+
+  var chartHeight = opts.height - opts.margin.top - opts.margin.bottom;
+  var chartWidth = opts.width - opts.margin.left - opts.margin.right;
 
   var svg = d3.select('#chart')
   	.append('svg')
@@ -28,6 +53,17 @@ var visualize = function(data) {
   		.text(function(d) {
   			return d.Tool
   		})
+      .attr('class', function(d) {
+    		return 'label ' + d.Change;
+    	})
+    	.attr('text-anchor', 'end')
+    	.attr('x', opts.margin.left * .6)
+  		.attr('y', function(d) {
+  			return opts.margin.top; //+ chartHeight - d.BeforeY;
+  		})
+  		.attr('dy', '.35em');
+
+
 };
 
 // Label each point as increasing/decreasing above thresholds
