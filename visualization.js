@@ -2,420 +2,111 @@
 $(function() {
   d3.csv("uiuc-students-by-curriculum.csv").then(function(data) {
     // Write the data to the console for debugging:
-    console.log(data);
+    // console.log(data);
 
     // Call our visualize function:
     visualize(data);
   });
 });
 
+
+
 var visualize = function(data) {
-  svg.append("g")
-  .call( axisVariable );
-  var arrayLength = data.length;
-	for (var i = 0; i < arrayLength; i++) {
-    change = data[i]['Fall'] - data[i]['Fall'];
-  	if (change < -3) {
-      data[i]['Change'] = 'negative';
-  	} else if (change > 5) {
-  	  data[i]['Change'] = 'positive';
-  	} else {
-  	  data[i]['Change'] = 'neutral';
-  	}
-  }
 
-  var opts = {
-		width: 600,
-		height: 500,
-		margin: {top: 20, right: 100, bottom: 30, left: 150}
-	};
 
-  var year = d3.scaleLinear()
-  .domain([1892,2018])
-  .range([0,opts.width]);
+  // Boilerplate:
+  var margin = { top: 50, right: 250, bottom: 50, left: 50 },
+     width = 1400,
+     height = 800;
 
-  var axisVariable = d3.axisTop()
-  .scale( year )
-  .tickFormat(d3.format("d"))
+  var svg = d3.select("#chart")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .style("width", width + margin.left + margin.right)
+    .style("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var chartHeight = opts.height - opts.margin.top - opts.margin.bottom;
-  var chartWidth = opts.width - opts.margin.left - opts.margin.right;
+  var allMajors = ["Accountancy","Business Administration (MBA)","Computer Engineering",
+                  "Computer Science","Curric Unassigned","Economics","Electrical Engineering",
+                  "Mechanical Engineering","Psychology","Undeclared"]
 
-  var svg = d3.select('#chart')
-  	.append('svg')
-  	.attr('width', opts.width)
-  	.attr('height', opts.height);
+  var dataReady = allMajors.map( function(majorName) {
+    return {
+      name: majorName,
+      values: data.map(function(d) {
+        return {Fall: d.Fall, value: +d[majorName]};
+      })
+    };
+  });
 
-    svg.selectAll('text.labels')
-  		.data(data)
-  		.enter()
-  		.append('text')
-  		.text(function(d) {
-  			return d.Tool
-  		})
-      .attr('class', function(d) {
-    		return 'label ' + d.Change;
-    	})
-    	.attr('text-anchor', 'end')
-    	.attr('x', opts.margin.left * .6)
-  		.attr('y', function(d) {
-  			return opts.margin.top; //+ chartHeight - d.BeforeY;
-  		})
-  		.attr('dy', '.35em');
+  var myColor = d3.scaleOrdinal()
+      .domain(allMajors)
+      .range(d3.schemeSet2);
+
+    // Add X axis --> it is a date format
+    var x = d3.scaleLinear()
+      .domain([1980,2018])
+      .range([ 0, width ]);
+
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+
+    // Add Y axis
+    var y = d3.scaleLinear()
+      .domain( [0,3000])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y).tickFormat(d3.format("d")));
+
+    // Add the lines
+    var line = d3.line()
+      .x(function(d) { return x(+d.Fall) })
+      .y(function(d) { return y(+d.value) })
+    svg.selectAll("myLines")
+      .data(dataReady)
+      .enter()
+      .append("path")
+        .attr("d", function(d){ return line(d.values) } )
+        .attr("stroke", function(d){ return myColor(d.name) })
+        .style("stroke-width", 4)
+        .style("fill", "none")
+
+    // Add the points
+    svg
+      // First we need to enter in a group
+      .selectAll("myDots")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .style("fill", function(d){ return myColor(d.name) })
+      // Second we need to enter in the 'values' part of this group
+      .selectAll("myPoints")
+      .data(function(d){ return d.values })
+      .enter()
+      .append("circle")
+        .attr("cx", function(d) { return x(d.Fall) } )
+        .attr("cy", function(d) { return y(d.value) } )
+        .attr("r", 5)
+        .attr("stroke", "white")
+
+    // Add a legend at the end of each line
+    svg
+      .selectAll("myLabels")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .append("text")
+          .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; }) // keep only the last value of each Fall sery
+          .attr("transform", function(d) { return "translate(" + x(d.value.Fall) + "," + y(d.value.value) + ")"; }) // Put the text at the position of the last point
+          .attr("x", 12) // shift the text a bit more right
+          .text(function(d) { return d.name; })
+          .style("fill", function(d){ return myColor(d.name) })
+          .style("font-size", 15)
+
 
 
 };
-
-// Label each point as increasing/decreasing above thresholds
-	// or just little to no change
-// 	var arrayLength = data.length;
-// 	for (var i = 0; i < arrayLength; i++) {
-// 	    change = data[i]['Fall'] - data[i]['Fall'];
-// 	    if (change < -3) {
-// 	    	data[i]['Change'] = 'negative';
-// 	    } else if (change > 5) {
-// 	    	data[i]['Change'] = 'positive';
-// 	    } else {
-// 	    	data[i]['Change'] = 'neutral';
-// 	    }
-// 	}
-//
-	// var opts = {
-	// 	width: 600,
-	// 	height: 500,
-	// 	margin: {top: 20, right: 100, bottom: 30, left: 150}
-	// };
-//
-// 	// Calculate area chart takes up out of entire svg
-// 	var chartHeight = opts.height - opts.margin.top - opts.margin.bottom;
-// 	var chartWidth = opts.width - opts.margin.left - opts.margin.right;
-//
-//
-	// var svg = d3.select('#chart')
-	// 	.append('svg')
-	// 	.attr('width', opts.width)
-	// 	.attr('height', opts.height);
-//
-// 	// Create scale for positioning data correctly in chart
-// 	var vertScale = d3.scaleLinear().domain([6, 53]).range([opts.margin.bottom, chartHeight]);
-//
-// 	// Labels overlap, need to precompute chart height placement
-// 	// and adjust to avoid label overlap
-//
-// 	// First, calculate the right and left side chart placements
-// 	for (var i = 0; i < arrayLength; i++) {
-// 		data[i]['AfterY'] = vertScale(data[i]['After']);
-// 		data[i]['BeforeY'] = vertScale(data[i]['Before']);
-// 	}
-//
-// 	// Next, use a basic heuristic to pull labels up or down
-// 	// If next item is too close to next one, move label up
-// 	// If next item is too close and item above has been moved up, keep the same value,
-// 	// and move next value down
-//
-// 	data.sort(function(a, b) {
-// 		return b.Before-a.Before;
-// 	})
-//
-//
-//
-// 	for (var i = 1; i < (arrayLength - 1); i++) {
-// 		if ((data[i]['BeforeY']-data[i+1]['BeforeY']) < 15) {
-// 			if ((data[i-1]['BeforeY']-data[i]['BeforeY']) < 15) {
-// 				data[i+1]['BeforeY'] = data[i+1]['BeforeY'] - 10;
-// 			} else {
-// 				data[i]['BeforeY'] = data[i]['BeforeY'] + 10;
-// 			}
-// 		}
-// 	}
-//
-// 	data.sort(function(a, b) {
-// 		return b.After-a.After;
-// 	})
-//
-// 	console.log(data);
-//
-// 	for (var i = 1; i < (arrayLength - 1); i++) {
-//
-// 		if ((data[i]['AfterY']-data[i+1]['AfterY']) < 15) {
-// 			if ((data[i-1]['AfterY']-data[i]['AfterY']) < 15) {
-// 				data[i+1]['AfterY'] = data[i+1]['AfterY'] - 10;
-// 			} else {
-// 				data[i]['AfterY'] = data[i]['AfterY'] + 10;
-// 			}
-// 		} else if ((data[i-1]['AfterY']-data[i]['AfterY']) < 15) {
-// 			data[i]['AfterY'] = data[i]['AfterY'] - 10;
-// 		}
-// 	}
-//
-// 	data.sort(function(a, b) {
-// 		return b.Before-a.Before;
-// 	})
-//
-// 	// Create slopegraph labels
-	// svg.selectAll('text.labels')
-	// 	.data(data)
-	// 	.enter()
-	// 	.append('text')
-	// 	.text(function(d) {
-	// 		return d.Tool
-	// 	})
-	// 	.attr('class', function(d) {
-	// 		return 'label ' + d.Change;
-	// 	})
-	// 	.attr('text-anchor', 'end')
-	// 	.attr('x', opts.margin.left * .6)
-	// 	.attr('y', function(d) {
-	// 		return opts.margin.top + chartHeight - d.BeforeY;
-	// 	})
-	// 	.attr('dy', '.35em');
-//
-// 	// Create slopegraph left value labels
-// 	svg.selectAll('text.leftvalues')
-// 		.data(data)
-// 		.enter()
-// 		.append('text')
-// 		.attr('class', function(d) {
-// 			return d.Change;
-// 		})
-// 		.text(function(d) {
-// 			return Math.round(d.Before) + '%'
-// 		})
-// 		.attr('text-anchor', 'end')
-// 		.attr('x', opts.margin.left * .85)
-// 		.attr('y', function(d) {
-// 			return opts.margin.top + chartHeight - d.BeforeY;
-// 		})
-// 		.attr('dy', '.35em');
-//
-// 	// Create slopegraph right value labels
-// 	svg.selectAll('text.rightvalues')
-// 		.data(data)
-// 		.enter()
-// 		.append('text')
-// 		.attr('class', function(d) {
-// 			return d.Change;
-// 		})
-// 		.text(function(d) {
-// 			return Math.round(d.After) + '%'
-// 		})
-// 		.attr('text-anchor', 'start')
-// 		.attr('x', chartWidth + opts.margin.right)
-// 		.attr('y', function(d) {
-// 			return opts.margin.top + chartHeight - d.AfterY;
-// 		})
-// 		.attr('dy', '.35em');
-//
-// 	// Create slopegraph lines
-// 	svg.selectAll('line.slope-line')
-// 		.data(data)
-// 		.enter()
-// 		.append('line')
-// 		.attr('class', function(d) {
-// 			return 'slope-line ' + d.Change;
-// 		})
-// 		.attr('x1', opts.margin.left)
-// 		.attr('x2', chartWidth + opts.margin.right * 0.75)
-// 		.attr('y1', function(d) {
-// 			return opts.margin.top + chartHeight - vertScale(d.Before);
-// 		})
-// 		.attr('y2', function(d) {
-// 			return opts.margin.top + chartHeight - vertScale(d.After);
-// 		});
-//
-// 	// Create slopegraph left circles
-// 	svg.selectAll('line.left-circle')
-// 		.data(data)
-// 		.enter()
-// 		.append('circle')
-// 		.attr('class', function(d) {
-// 			return d.Change;
-// 		})
-// 		.attr('cx', opts.margin.left)
-// 		.attr('cy', function(d) {
-// 			return opts.margin.top + chartHeight - vertScale(d.Before);
-// 		})
-// 		.attr('r', 6);
-//
-// 	// Create slopegraph right circles
-// 	svg.selectAll('line.left-circle')
-// 		.data(data)
-// 		.enter()
-// 		.append('circle')
-// 		.attr('class', function(d) {
-// 			return d.Change;
-// 		})
-// 		.attr('cx',chartWidth + opts.margin.right * 0.75)
-// 		.attr('cy', function(d) {
-// 			return opts.margin.top + chartHeight - vertScale(d.After);
-// 		})
-// 		.attr('r', 6);
-//
-// 	// Create bottom area denoting years
-// 	svg.append("line")
-// 		.attr('x1', opts.margin.left)
-// 		.attr('x2', opts.margin.left)
-// 		.attr('y1', opts.height - opts.margin.bottom)
-// 		.attr('y2', opts.height - opts.margin.bottom * 0.7)
-// 		.attr('stroke', 'grey')
-// 		.attr('stroke-width', '2px');
-//
-// 	svg.append("line")
-// 		.attr('x1', chartWidth + opts.margin.right * 0.75)
-// 		.attr('x2', chartWidth + opts.margin.right * 0.75)
-// 		.attr('y1', opts.height - opts.margin.bottom)
-// 		.attr('y2', opts.height - opts.margin.bottom * 0.7)
-// 		.attr('stroke', 'grey')
-// 		.attr('stroke-width', '2px');
-//
-// 	svg.append("line")
-// 		.attr('x1', opts.margin.left)
-// 		.attr('x2', chartWidth + opts.margin.right * 0.75)
-// 		.attr('y1', opts.height - opts.margin.bottom * 0.7)
-// 		.attr('y2', opts.height - opts.margin.bottom * 0.7)
-// 		.attr('stroke', 'grey')
-// 		.attr('stroke-width', '2px');
-//
-// 	svg.append('text')
-// 		.text('2016')
-// 		.attr('class', 'neutral')
-// 		.attr('x', opts.margin.left)
-// 		.attr('y', opts.height - opts.margin.bottom * 0.05)
-// 		.attr('text-anchor', 'start');
-//
-// 	svg.append('text')
-// 		.text('2017')
-// 		.attr('class', 'neutral')
-// 		.attr('x', chartWidth + opts.margin.right * 0.75)
-// 		.attr('y', opts.height - opts.margin.bottom * 0.05)
-// 		.attr('text-anchor', 'end');
-//
-// 	// Get y values of notes and add notes to viz
-// 	var pythonY = data.filter(function (ind) {
-// 		return ind.Tool == 'Python';
-// 	});
-//
-// 	var rapidMinerY = data.filter(function (ind) {
-// 		return ind.Tool == 'RapidMiner';
-// 	});
-//
-// 	var tensorflowY = data.filter(function (ind) {
-// 		return ind.Tool == 'Tensorflow';
-// 	});
-//
-// 	svg.selectAll('text-comments')
-// 		.data(data)
-// 		.enter()
-// 		.append('text')
-// 		.text(function(d) {
-// 			return d.Comments;
-// 		})
-// 		.attr('class', 'neutral')
-// 		.attr('text-anchor', 'start')
-// 		.attr('x', chartWidth + opts.margin.right)
-// 		.attr('y', function(d) {
-// 			return opts.margin.top + chartHeight - d.AfterY;
-// 		})
-// 		.attr('dy', '.25em')
-// 		.call(wrap, opts.margin.right);
-//
-// 	function wrap(text, width) {
-// 	  text.each(function() {
-// 	    var text = d3.select(this),
-// 	        words = text.text().split(/\s+/).reverse(),
-// 	        word,
-// 	        line = [],
-// 	        lineNumber = 0,
-// 	        lineHeight = 1.1, // ems
-// 	        y = text.attr("y"),
-// 	        dy = parseFloat(text.attr("dy")),
-// 	        tspan = text.text(null).append("tspan").attr("x", chartWidth + opts.margin.left).attr("y", y).attr("dy", dy + "em");
-// 	    while (word = words.pop()) {
-// 	      line.push(word);
-// 	      tspan.text(line.join(" "));
-// 	      if (tspan.node().getComputedTextLength() > width) {
-// 	        line.pop();
-// 	        tspan.text(line.join(" "));
-// 	        line = [word];
-// 	        tspan = text.append("tspan").attr("x", chartWidth + opts.margin.left).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-// 	      }
-// 	    }
-// 	  });
-// 	}
-// });
-//
-//
-// function round10(x) {
-//     return Math.round(x / 10) * 10;
-// }
-// var visualize = function(data) {
-//   // Boilerplate:
-//   var margin = { top: 50, right: 50, bottom: 50, left: 130 },
-//   width = 2000 - margin.left - margin.right,
-//   height = 3000 - margin.top - margin.bottom;
-//
-//   var svg = d3.select("#chart")
-//   .append("svg")
-//   .attr("width", width + margin.left + margin.right)
-//   .attr("height", height + margin.top + margin.bottom)
-//   .style("width", width + margin.left + margin.right)
-//   .style("height", height + margin.top + margin.bottom)
-//   .append("g")
-//   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
-
-//   var col = [];
-//   for (var i = 0; i < data.length; i++) {
-//     if (!col.includes(data[i].Opponent)) {
-//       col.push(data[i].Opponent)
-//     }
-//   }
-//
-//   //col = col.filter( onlyUnique );
-//
-  // var year = d3.scaleLinear()
-  // .domain([1892,2018])
-  // .range([0,width]);
-  //
-  // var axisVariable = d3.axisTop()
-  // .scale( year )
-  // .tickFormat(d3.format("d"))
-  //
-  // svg.append("g")
-  // .call( axisVariable );
-  //
-  // var team = d3.scalePoint()
-  // .domain(col)
-  // .range([0,height]);
-  //
-  // var axisVariable = d3.axisLeft()
-  // .scale( team )
-  //
-  // svg.append("g")
-  // .call( axisVariable );
-
-//   // Visualization Code:
-//   var j = 0;
-//   var colors = ["red", "violet", "skyblue", "chartreuse", "coral"]
-//   svg.selectAll("Fall")
-//   .data(data)
-//   .enter()
-//   .append("circle")
-//   .attr("r", function (d, i) {
-//     return 4;
-//     //return data[i].IlliniScore/3.5;
-//   })
-//   .attr("cx", function (d, i) {
-//     return year( d["Fall"]);
-//   })
-//   .attr("cy", function (d, i) {
-//     return team (d ["College"]);
-//   })
-//   .attr("fill", function (d, i) {
-//     return red;
-//     //return colors[Math.floor(data[i].IlliniScore/20)];
-//   })
-//   .attr("stroke", "black")
-//   .style("opacity", 0.65)
- //};
